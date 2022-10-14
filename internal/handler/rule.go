@@ -36,3 +36,7 @@ func SearchRuleMatch(ctx *gin.Context) {
 func Metadata(ctx *gin.Context) {
 	// @todo: implement.
 }
+
+func GetAllSegments(ctx *gin.Context) {
+	ctx.IndentedJSON(http.StatusOK, rule.SegmentPack)
+}

@@ -6,14 +6,20 @@ import (
 	"context"
 	"github.com/corneliu-iancu/seo-engine.go-backend/common/server/http"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/handler"
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/service"
 )
 
 func main() {
-	httpServer := http.Init(handler.GinHandler())
 
-	// @TODO: Should be moved to superbet Task implementation, aloing with monitoring and logging.
+	services := service.NewApplication()
 
-	// Starts the actual HTTP server.
+	httpControllers := handler.NewHttpControllers(services)
+
+	httpServer := http.Init(handler.GinHandler(httpControllers))
+
+	// // @TODO: Should be moved to superbet Task implementation, aloing with monitoring and logging.
+
+	// // Starts the actual HTTP server.
 	ctx, _ := context.WithCancel(context.Background())
 	httpServer.Start(ctx)
 }
