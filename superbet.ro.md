@@ -1,0 +1,11 @@
+- superbet.ro
+    - pariuri-sportive
+        - fotbal
+            - romania
+            - germania
+            - *
+        - tenis
+        - *
+    - rezultate
+    - *
+- superbet.pl

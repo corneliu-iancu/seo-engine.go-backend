@@ -1,9 +1,10 @@
-package service
+package factory
 
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/adaptor"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/app"
 )
@@ -24,8 +25,8 @@ func NewApplication() app.Application {
 	}
 }
 
-// Returns an instance of *dynamoDB
-func createLocalClient() *dynamodb.DynamoDB {
+// Returns an instance of *dynamoDB type
+func createLocalClient() dynamodbiface.DynamoDBAPI {
 	// Reads aws configuration from following files:
 	// ~/.aws/credentials
 	// ~/.aws/config
@@ -33,5 +34,7 @@ func createLocalClient() *dynamodb.DynamoDB {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	return dynamodb.New(sess)
+	svc := dynamodb.New(sess)
+
+	return dynamodbiface.DynamoDBAPI(svc)
 }

@@ -5,6 +5,8 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.44.114
 	github.com/gin-gonic/gin v1.8.1
+	github.com/google/uuid v1.3.0
+	github.com/gusaul/go-dynamock v0.0.0-20210107061312-3e989056e1e6
 )
 
 require (
@@ -14,7 +16,6 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
