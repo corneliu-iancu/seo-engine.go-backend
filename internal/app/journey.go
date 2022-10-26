@@ -28,8 +28,6 @@ func (app Application) GetAllRules() ([]rule.Rule, error) {
 func (app Application) AddRule(u *url.URL) ([]rule.Segment, error) {
 	fmt.Println("[DEBUG] app.jurney / AddRule call")
 
-	fmt.Println(u)
-
 	pathParams := []string{}
 	pathParams = append(pathParams, u.Host)
 	// exclude first element, as the Path starts with an "/"
@@ -42,10 +40,6 @@ func (app Application) AddRule(u *url.URL) ([]rule.Segment, error) {
 }
 
 func (app Application) GetMatch(u *url.URL) ([]rule.Rule, error) {
-	fmt.Println("[DEBUG] Application - GetMatch")
-
-	// r := []rule.Rule{}
-
 	host := u.Host
 	p := strings.Split(u.Path, string('/')) // @todo: validate if the last path param is "/"
 	p = p[1:]
@@ -58,46 +52,37 @@ func (app Application) GetMatch(u *url.URL) ([]rule.Rule, error) {
 
 	// STEP 1. Fetch Rules by domain name, as a tree struct.
 	rules, _ := app.RulesService.GetRulesByDomain(pathParams[0])
-	// STEP 2. Get Rules as tree.
 
-	// findMatches(pathParams, rules, 0, &r)
+	r := findMatches(rules, pathParams)
 
-	fmt.Println(rules)
-	// matching algorithm.
-
-	// Step 3. Iterate over rules, and check which nodes match
-
-	// Step 4. Return as a list of Nodes.
-
-	// Useful tips.
-	// Only leaf nodes will register metadata for a needle uri.
-
-	return rules, nil
+	return r, nil
 }
 
 // helper fn for reading tree.
-
-func findMatches(urlPaths []string, tree []rule.Rule, treeLevel int, response *[]rule.Rule) {
-	// fmt.Println("[DEBUG] Tree level: ", tree)
-
-	for _, leaf := range tree {
-
-		/* if leaf.Path == urlPaths[treeLevel] {
-			*response = append(*response, rule.Rule{
-				Id:       leaf.Id,
-				Path:     leaf.Path,
-				Type:     leaf.Type,
-				Domain:   leaf.Domain,
-				Children: []rule.Rule{},
-			})
-		} */
-
-		if len(leaf.Children) > 0 {
-			findMatches(urlPaths, leaf.Children, treeLevel+1, response)
+func findMatches(tree []rule.Rule, urlPaths []string) []rule.Rule {
+	fmt.Println("[DEBUG] Matching: ", urlPaths)
+	result := []rule.Rule{}
+	i := 0
+	for i < len(tree) {
+		// hard to read.
+		// types defer (true) and type is fixed(1)(true) => true
+		if tree[i].Path != urlPaths[0] && tree[i].Type == rule.FType {
+			i++
+			continue
 		}
 
-		fmt.Println("[DEBUG] Reading: ", leaf.Path, treeLevel, urlPaths[treeLevel])
+		if len(tree[i].Children) > 0 && len(urlPaths) > 1 {
+			result = append(result, findMatches(tree[i].Children, urlPaths[1:])...)
+		}
+
+		if len(urlPaths) == 1 {
+			fmt.Println("[DEBUG] Found: ", tree[i].Path)
+			result = append(result, tree[i])
+		}
+
+		i++
 	}
+	return result
 }
 
 // @todo: add docs

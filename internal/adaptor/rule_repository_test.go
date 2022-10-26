@@ -1,8 +1,11 @@
 package adaptor
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/rule"
+	"regexp"
 	"testing"
 )
 
@@ -32,9 +35,19 @@ func init() {
 
 func TestRuleRepository_CreateRulesTable(t *testing.T) {
 
-	repository := NewRuleDynamoRepository(Dyna.Db)
+	// repository := NewRuleDynamoRepository(Dyna.Db)
 
-	result, _ := repository.CreateRulesTable()
+	//result, _ := repository.CreateRulesTable()
+	//
+	//mock.ExpectCreateTable().WillReturns(*result)
 
-	mock.ExpectCreateTable().WillReturns(*result)
+	toTestString := "{param1}"
+
+	re := regexp.MustCompile(`{[a-zA-Z^0-9]*?\}`)
+
+	if len(re.FindAllString(toTestString, -1)) == 1 {
+		fmt.Println("matches the regex", rule.VType)
+	} else {
+		fmt.Println("does not match the regex", rule.FType)
+	}
 }

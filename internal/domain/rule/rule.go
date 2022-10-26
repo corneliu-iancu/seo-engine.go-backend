@@ -13,7 +13,8 @@ type Rule struct {
 	ParentId string
 	Path     string
 	Type     SegmentType
-	Domain   string
+	Domain   string `json:"-"`
+	Weight   int8
 	Children []Rule `json:",omitempty"`
 }
 
@@ -26,4 +27,5 @@ type Segment struct {
 	CreatedAt string      // Created at
 	UpdatedAt string      // Updated at
 	Type      SegmentType // Type of segment: fixed or variable
+	Weight    int8
 }

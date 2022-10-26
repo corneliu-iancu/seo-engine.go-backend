@@ -28,40 +28,9 @@ func NewRuleDynamoRepository(db dynamodbiface.DynamoDBAPI) RuleDynamoRepository 
 	}
 }
 
-// Finds a root segment by string parameter.
-// @todo: remove me.
-//func (rdr RuleDynamoRepository) FindRoot(s string) error {
-//
-//	svc := rdr.db
-//
-//	fmt.Println("[DEBUG][repository] search in db for a root eleemnt", s)
-//
-//	result, err := svc.GetItem(&dynamodb.GetItemInput{
-//		TableName: aws.String(tableName),
-//		Key: map[string]*dynamodb.AttributeValue{
-//			"Path": {
-//				S: aws.String(s),
-//			},
-//			"ParentId": {
-//				N: aws.String("0"), //@todo: find docs for this one.
-//			},
-//		},
-//	})
-//
-//	if err != nil {
-//		fmt.Println("[FATAL] Got error calling GetItem: %s", err)
-//		return err
-//	}
-//
-//	fmt.Println("Found the following root element: ", result)
-//
-//	return nil
-//}
-
+// API METHODS
 func (rdr RuleDynamoRepository) GetSegmentByPathAndParent(path string, parent string) (model.Segment, error) {
-
 	svc := rdr.db
-
 	fmt.Println("[DEBUG][repository] Search in db for an entry based on Path and Parent", path, parent)
 
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
@@ -90,7 +59,7 @@ func (rdr RuleDynamoRepository) GetSegmentByPathAndParent(path string, parent st
 		}
 		return s, nil
 	}
-	// fmt.Println("Found the following element: ", result.Item)
+
 	return model.Segment{}, nil
 }
 
@@ -161,6 +130,8 @@ func (rdr RuleDynamoRepository) CreateNode(segment *model.Segment) error {
 	if len(segment.Id) == 0 {
 		segment.Id = uuid.New().String()[:8]
 	}
+
+	fmt.Println("[DEBUG] New segmentId: ", segment.Id)
 
 	av, err := dynamodbattribute.MarshalMap(segment)
 	if err != nil {

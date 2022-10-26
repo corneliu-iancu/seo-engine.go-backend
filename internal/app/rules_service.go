@@ -27,48 +27,47 @@ func NewRulesService(rulesRepository adaptor.RuleDynamoRepository) RulesService 
 // Creates segments and persists them to db though repository layer.
 func (rs RulesService) CreateFromListOfSegments(segments []string) []rule.Segment {
 	result := []rule.Segment{}
-	parent := ROOT //rootSegment.Id
+	parentId := ROOT
+	weight := 0
 	domain := segments[0]
 
 	for _, segment := range segments {
 		fmt.Println("[DEBUG] Looping segments >> ", segment)
 		// pentru fiecare segment avem doua variante.
-		s, error := rs.rulesRepository.GetSegmentByPathAndParent(segment, parent)
+		s, error := rs.rulesRepository.GetSegmentByPathAndParent(segment, parentId)
+
 		if error != nil {
 			fmt.Println("[ERROR] Failed to get by Path and ParentId", error)
 		}
 
-		if len(s.Id) > 0 { // 1. Exista deja segmentul
-			fmt.Println("[DEBUG] Segment: ", segment, "exists:", s)
-		} else { // 2. Nu exista segmentul.
-			fmt.Println("[DEBUG] Segment: ", segment, "does not exists:", s)
+		if len(s.Id) == 0 { // 2. The segment does not exists.
 			re := regexp.MustCompile(`{[a-zA-Z^0-9]*?\}`)
 
-			// if re.Match(segment)
+			if len(re.FindAllString(segment, -1)) == 1 {
+				fmt.Println("[DEBUG] Variable type parameter: ", s.Path)
+				s.Type = rule.VType
+			} else {
+				fmt.Println("[DEBUG] Fixed type parameter: ", s.Path)
+				s.Type = rule.FType
+			}
 
 			s.Path = segment
-			s.ParentId = parent
+			s.ParentId = parentId
 			s.Domain = domain
 			s.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
 			s.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
-
-			if len(re.FindAllString(s.Path, -1)) == 1 {
-				fmt.Println("[DEBUG] Segment: ", segment, "is variable type")
-				s.Type = rule.VType
-			} else {
-				fmt.Println("[DEBUG] Segment: ", segment, "is fixed type")
-				s.Type = rule.FType
-			}
+			s.Weight = int8(weight)
 
 			err := rs.rulesRepository.CreateNode(&s)
 			if err != nil {
 				fmt.Println("[ERROR] Could not create node element with error: ", err)
 			}
 
-			fmt.Println("[DEBUG] Segment: ", s.Path, " has beed created.")
+			fmt.Println("[DEBUG] Segment: ", s, " has beed created")
 		}
 
-		parent = s.Id
+		weight += int(s.Type)
+		parentId = s.Id
 		result = append(result, s)
 	}
 	return result
@@ -103,15 +102,14 @@ func (rs RulesService) GetRules() ([]rule.Rule, error) {
 
 // Returns all rules by using the domain property as input.
 func (rs RulesService) GetRulesByDomain(domain string) ([]rule.Rule, error) {
-	// Get segments by domain name.
+
 	segments, err := rs.rulesRepository.GetSegmentsByDomainName(domain)
+
 	if err != nil {
 		fmt.Println("[ERROR] failed to get all segments")
 	}
 
 	relations := relationMap(segments)
-
-	fmt.Println("[DEBUG]Segment relations:", relations)
 
 	rules := buildRules(relations[ROOT], relations, segments)
 
@@ -137,7 +135,7 @@ func buildRules(roots []string, relations map[string][]string, segments []rule.S
 
 		segment := findSegment(id, segments)
 
-		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId}
+		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId, Weight: segment.Weight}
 
 		if childIDs, ok := relations[id]; ok { // build children
 			r.Children = buildRules(childIDs, relations, segments)
