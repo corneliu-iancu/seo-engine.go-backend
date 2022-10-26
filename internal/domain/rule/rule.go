@@ -10,6 +10,7 @@ const (
 // From a Rule structure, may result one or many URIs.
 type Rule struct {
 	Id       string
+	ParentId string
 	Path     string
 	Type     SegmentType
 	Domain   string

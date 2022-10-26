@@ -114,9 +114,44 @@ func (rdr RuleDynamoRepository) GetSegments() ([]model.Segment, error) {
 		results = append(results, rule)
 	}
 
-	// fmt.Println(results)
-
 	return results, nil
+}
+
+func (rdr RuleDynamoRepository) GetSegmentsByDomainName(domain string) ([]model.Segment, error) {
+	r := []model.Segment{}
+
+	filter := expression.Name("Domain").Equal(expression.Value(domain))
+
+	expr, err := expression.NewBuilder().WithFilter(filter).Build()
+	if err != nil {
+		fmt.Println("[ERROR] Got error building expression:", err)
+		return r, err
+	}
+
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(tableName),
+	}
+
+	result, err := rdr.db.Scan(params)
+	if err != nil {
+		log.Fatalf("[FATAL] Got error unmashalling: %s", err)
+		return nil, err
+	}
+	// handle error.
+	for _, i := range result.Items {
+		segment := model.Segment{}
+		err = dynamodbattribute.UnmarshalMap(i, &segment)
+		if err != nil {
+			log.Fatalf("Got error unmashalling: %s", err)
+			return nil, err
+		}
+		r = append(r, segment)
+	}
+
+	return r, nil
 }
 
 // Persists one segment to the database.

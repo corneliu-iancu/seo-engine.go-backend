@@ -101,6 +101,23 @@ func (rs RulesService) GetRules() ([]rule.Rule, error) {
 	return rules, nil
 }
 
+// Returns all rules by using the domain property as input.
+func (rs RulesService) GetRulesByDomain(domain string) ([]rule.Rule, error) {
+	// Get segments by domain name.
+	segments, err := rs.rulesRepository.GetSegmentsByDomainName(domain)
+	if err != nil {
+		fmt.Println("[ERROR] failed to get all segments")
+	}
+
+	relations := relationMap(segments)
+
+	fmt.Println("[DEBUG]Segment relations:", relations)
+
+	rules := buildRules(relations[ROOT], relations, segments)
+
+	return rules, nil
+}
+
 // PRIVATE METHODS BELLOW
 
 func relationMap(segments []rule.Segment) map[string][]string {
@@ -117,11 +134,15 @@ func buildRules(roots []string, relations map[string][]string, segments []rule.S
 	rules := make([]rule.Rule, len(roots))
 
 	for i, id := range roots {
+
 		segment := findSegment(id, segments)
-		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain}
+
+		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId}
+
 		if childIDs, ok := relations[id]; ok { // build children
 			r.Children = buildRules(childIDs, relations, segments)
 		}
+
 		rules[i] = r
 	}
 	return rules
