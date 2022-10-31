@@ -29,14 +29,20 @@ func NewApplication() app.Application {
 
 // Returns an instance of *dynamoDB type
 func createLocalClient() dynamodbiface.DynamoDBAPI {
+	// ====================================================
+	// REMOTE CONNECTION.
+	// ====================================================
 	// Reads aws configuration from following files:
 	// ~/.aws/credentials
 	// ~/.aws/config
 
-	// sess := session.Must(session.NewSessionWithOptions(session.Options{
-	//	 SharedConfigState: session.SharedConfigEnable,
-	// }))
+	/* sess := session.Must(session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+	 	})) */
 
+	// ====================================================
+	// LOCAL CONNECTION.
+	// ====================================================
 	sess, err := session.NewSession(&aws.Config{
 		Region:   aws.String("us-west-2"),
 		Endpoint: aws.String("http://localhost:8000")})

@@ -21,10 +21,10 @@ func NewHttpControllers(app app.App) *HttpControllers {
 	}
 }
 
-// Returns all db rules data.
+// Returns all db segments data.
 func (hc HttpControllers) FindAllSegments(ctx *gin.Context) {
-	rules, _ := hc.app.GetAllSegments() // @todo: rename to find all segments.
-	ctx.IndentedJSON(http.StatusOK, rules)
+	segments, _ := hc.app.GetAllSegments() // @todo: rename to find all segments.
+	ctx.IndentedJSON(http.StatusOK, segments)
 }
 
 func (hc HttpControllers) GetRules(ctx *gin.Context) {
@@ -50,6 +50,7 @@ func (hc HttpControllers) AddRule(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, result)
 }
 
+// Returns rules that matches a given uri as a GET param.
 func (hc HttpControllers) GetMatch(ctx *gin.Context) {
 	uri, _ := ctx.GetQuery("uri")
 	u, err := url.Parse(uri)

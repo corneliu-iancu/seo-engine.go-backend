@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/adaptor"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/rule"
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/helper"
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -116,7 +118,17 @@ func (rs RulesService) GetRulesByDomain(domain string) ([]rule.Rule, error) {
 	return rules, nil
 }
 
-// PRIVATE METHODS BELLOW
+func (rs RulesService) GetMatch(u *url.URL) []rule.Rule {
+	pathParams := helper.GetURIAsSlice(u)
+
+	// costly operation. @todo: refactor to query for each param.
+	// @todo: verify times for both aproches.
+	rules, _ := rs.GetRulesByDomain(pathParams[0])
+	r := findMatches(rules, pathParams)
+
+	fmt.Println("[DEBUG] Get match rules for ", pathParams)
+	return r
+}
 
 func relationMap(segments []rule.Segment) map[string][]string {
 	relations := make(map[string][]string)
@@ -153,4 +165,31 @@ func findSegment(id string, segments []rule.Segment) rule.Segment {
 		}
 	}
 	return rule.Segment{}
+}
+
+// helper fn for reading tree.
+func findMatches(tree []rule.Rule, urlPaths []string) []rule.Rule {
+	fmt.Println("[DEBUG] Matching: ", urlPaths)
+	result := []rule.Rule{}
+	i := 0
+	for i < len(tree) {
+		// hard to read.
+		// types defer (true) and type is fixed(1)(true) => true
+		if tree[i].Path != urlPaths[0] && tree[i].Type == rule.FType {
+			i++
+			continue
+		}
+
+		if len(tree[i].Children) > 0 && len(urlPaths) > 1 {
+			result = append(result, findMatches(tree[i].Children, urlPaths[1:])...)
+		}
+
+		if len(urlPaths) == 1 {
+			fmt.Println("[DEBUG] Found: ", tree[i].Path)
+			result = append(result, tree[i])
+		}
+
+		i++
+	}
+	return result
 }

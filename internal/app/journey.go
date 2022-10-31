@@ -28,6 +28,7 @@ func (app Application) GetAllRules() ([]rule.Rule, error) {
 func (app Application) AddRule(u *url.URL) ([]rule.Segment, error) {
 	fmt.Println("[DEBUG] app.jurney / AddRule call")
 
+	// @todo: extract to a function in order to be testable.
 	pathParams := []string{}
 	pathParams = append(pathParams, u.Host)
 	// exclude first element, as the Path starts with an "/"
@@ -40,50 +41,54 @@ func (app Application) AddRule(u *url.URL) ([]rule.Segment, error) {
 }
 
 func (app Application) GetMatch(u *url.URL) ([]rule.Rule, error) {
+	// @todo: wrap get path params into it's own function. Ideea: Helper function.
+	// ========================================================================
+	// Prepare path params string slice
+	// ========================================================================
 	host := u.Host
 	p := strings.Split(u.Path, string('/')) // @todo: validate if the last path param is "/"
 	p = p[1:]
-
 	pathParams := []string{}
 	pathParams = append(pathParams, host)
-
 	// exclude first element, as the Path starts with an "/"
 	pathParams = append(pathParams, p...)
+	// ========================================================================
+	// END: Prepare path params string slice
+	// ========================================================================
 
-	// STEP 1. Fetch Rules by domain name, as a tree struct.
 	rules, _ := app.RulesService.GetRulesByDomain(pathParams[0])
-
 	r := findMatches(rules, pathParams)
 
 	return r, nil
 }
 
 // helper fn for reading tree.
-func findMatches(tree []rule.Rule, urlPaths []string) []rule.Rule {
-	fmt.Println("[DEBUG] Matching: ", urlPaths)
-	result := []rule.Rule{}
-	i := 0
-	for i < len(tree) {
-		// hard to read.
-		// types defer (true) and type is fixed(1)(true) => true
-		if tree[i].Path != urlPaths[0] && tree[i].Type == rule.FType {
-			i++
-			continue
-		}
-
-		if len(tree[i].Children) > 0 && len(urlPaths) > 1 {
-			result = append(result, findMatches(tree[i].Children, urlPaths[1:])...)
-		}
-
-		if len(urlPaths) == 1 {
-			fmt.Println("[DEBUG] Found: ", tree[i].Path)
-			result = append(result, tree[i])
-		}
-
-		i++
-	}
-	return result
-}
+// @todo: remove me. I am implemented in the service.
+//func findMatches(tree []rule.Rule, urlPaths []string) []rule.Rule {
+//	fmt.Println("[DEBUG] Matching: ", urlPaths)
+//	result := []rule.Rule{}
+//	i := 0
+//	for i < len(tree) {
+//		// hard to read.
+//		// types defer (true) and type is fixed(1)(true) => true
+//		if tree[i].Path != urlPaths[0] && tree[i].Type == rule.FType {
+//			i++
+//			continue
+//		}
+//
+//		if len(tree[i].Children) > 0 && len(urlPaths) > 1 {
+//			result = append(result, findMatches(tree[i].Children, urlPaths[1:])...)
+//		}
+//
+//		if len(urlPaths) == 1 {
+//			fmt.Println("[DEBUG] Found: ", tree[i].Path)
+//			result = append(result, tree[i])
+//		}
+//
+//		i++
+//	}
+//	return result
+//}
 
 // @todo: add docs
 func (app Application) CreateRulesTable() error {

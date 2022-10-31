@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -19,7 +19,7 @@ type Server struct {
 }
 
 // Start starts listening for requests and serving responses.
-func (s *Server) Start(ctx context.Context) {
+func (s *Server) Start(ctx context.Context) (err error) {
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.port),
 		Handler:      s.router, // gin router
@@ -27,15 +27,34 @@ func (s *Server) Start(ctx context.Context) {
 		WriteTimeout: s.timeout,
 	}
 
+	go func() {
+		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("[DEBUG] Listen:%+s\n", err)
+		}
+	}()
+
 	fmt.Println("[DEBUG] 🚀 HTTP server started on port 9000.")
 
-	// make use of go channels.
-	err := server.ListenAndServe()
+	<-ctx.Done()
 
-	if err != nil {
-		fmt.Println("[FATAL] Server stoped due to errors")
-		os.Exit(1)
+	log.Printf("[DEBUG] 🚦 Server stopped")
+
+	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		cancel()
+	}()
+
+	if err = server.Shutdown(ctxShutDown); err != nil {
+		log.Fatalf("[DEBUG] 🔴 Server Shutdown Failed:%+s", err)
 	}
+
+	log.Printf("[DEBUG] ✅ Server exited properly")
+
+	if err == http.ErrServerClosed {
+		err = nil
+	}
+
+	return
 }
 
 // () config *Config, log Logger, monitor Monitor
