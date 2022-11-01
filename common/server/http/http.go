@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -14,7 +14,7 @@ type Server struct {
 	port    int32
 	timeout time.Duration
 	router  *gin.Engine
-	// log     Logger
+	log     *zap.Logger
 	// monitor Monitor
 }
 
@@ -29,15 +29,15 @@ func (s *Server) Start(ctx context.Context) (err error) {
 
 	go func() {
 		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("[DEBUG] Listen:%+s\n", err)
+			s.log.Fatal("[DEBUG] Listen:%+s\n", zap.Error(err))
 		}
 	}()
 
-	fmt.Println("[DEBUG] 🚀 HTTP server started on port 9000.")
+	s.log.Debug("🚀 HTTP server started on port 9000.")
 
 	<-ctx.Done()
 
-	log.Printf("[DEBUG] 🚦 Server stopped")
+	s.log.Debug("🚦 Server stopped")
 
 	ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
@@ -45,10 +45,10 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	}()
 
 	if err = server.Shutdown(ctxShutDown); err != nil {
-		log.Fatalf("[DEBUG] 🔴 Server Shutdown Failed:%+s", err)
+		s.log.Fatal("[DEBUG] 🔴 Server Shutdown Failed:%+s", zap.Error(err))
 	}
 
-	log.Printf("[DEBUG] ✅ Server exited properly")
+	s.log.Debug("✅ Server exited properly")
 
 	if err == http.ErrServerClosed {
 		err = nil
@@ -58,13 +58,13 @@ func (s *Server) Start(ctx context.Context) (err error) {
 }
 
 // () config *Config, log Logger, monitor Monitor
-func New(routes func(*gin.Engine)) *Server {
+func New(routes func(*gin.Engine), logger *zap.Logger) *Server {
 	// Default configuration.
 	port := 9000
 	timeout := 10 * time.Second // default timeout - 10 000 milliseconds (10s)
 
 	// Creates new gin router.
-	router := NewRouter()
+	router := NewRouter(logger)
 
 	// Apply custom routes handler to the gin router.
 	routes(router)
@@ -74,12 +74,13 @@ func New(routes func(*gin.Engine)) *Server {
 		port:    int32(port),
 		timeout: timeout,
 		router:  router,
+		log:     logger,
 	}
 }
 
 // Initialize the HTTP Server.
-func Init(routes func(*gin.Engine)) *Server {
+func Init(routes func(*gin.Engine), logger *zap.Logger) *Server {
 	// Init function.
 	// @Todo: Add server configuration.
-	return New(routes)
+	return New(routes, logger)
 }

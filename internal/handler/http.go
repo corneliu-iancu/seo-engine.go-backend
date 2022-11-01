@@ -22,15 +22,15 @@ func NewHttpControllers(app app.App) *HttpControllers {
 }
 
 // Returns all db segments data.
+// @todo: remove me.
 func (hc HttpControllers) FindAllSegments(ctx *gin.Context) {
 	segments, _ := hc.app.GetAllSegments() // @todo: rename to find all segments.
 	ctx.IndentedJSON(http.StatusOK, segments)
 }
 
+// Returns all rules.
+// @todo: remove me.
 func (hc HttpControllers) GetRules(ctx *gin.Context) {
-
-	// demo purposes.
-
 	rules, _ := hc.app.GetAllRules()
 	ctx.IndentedJSON(http.StatusOK, rules)
 }

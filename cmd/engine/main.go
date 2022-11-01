@@ -15,7 +15,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 
@@ -25,8 +25,11 @@ import (
 )
 
 // main entry point to the go app.
-// @todo: Should be moved to superbet Task implementation, aloing with monitoring and logging.
 func main() {
+	// @todo: based on dev environment.
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
 	// application instance.
 	services := factory.NewApplication()
 
@@ -47,19 +50,20 @@ func main() {
 	httpControllers := handler.NewHttpControllers(services)
 
 	// http server with our custom route config
-	httpServer := http.Init(handler.GinHandler(httpControllers))
+	httpServer := http.Init(handler.GinHandler(httpControllers), logger)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
+		_ = <-c
 		oscall := <-c
-		log.Printf("[DEBUG]️️ ⚡️ System call:%+v", oscall)
+		logger.Info("[DEBUG]️️ ⚡️ System call:%+v", zap.String("oscall", oscall.String()))
 		cancel()
 	}()
 
 	if err := httpServer.Start(ctx); err != nil {
-		log.Printf("[ERROR] 🔴 Failed to serve:+%v\n", err)
+		logger.Error("[ERROR] 🔴 Failed to serve:+%v\n", zap.Error(err))
 	}
 }
