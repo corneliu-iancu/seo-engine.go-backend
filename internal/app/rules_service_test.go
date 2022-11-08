@@ -64,17 +64,18 @@ func TestRulesService_AddRulesSet(t *testing.T) {
 	ruleService := NewRulesService(adaptor.NewRuleDynamoRepository(Dyna.Db))
 
 	for i, uri := range data {
-		if i < 1500 {
+		// fmt.Println("[DEBUG] Current URL:", uri)
+		if i < 5 {
 			u, err := url.Parse(strings.TrimSpace(uri[0]))
 			if err != nil {
 				// fmt.Println("[ERROR] Got parse error: ", err)
 			} else {
-				// Extracted from `journey.go` file.
+				// Extracted from `business_logic_impl.go` file.
 				pathParams := []string{}
 				pathParams = append(pathParams, u.Host)
 				pathParams = append(pathParams, strings.Split(u.Path, string('/'))[1:]...)
 
-				segmentsList := ruleService.CreateFromListOfSegments(pathParams)
+				segmentsList := ruleService.CreateFromListOfStrings(pathParams)
 
 				fmt.Println(segmentsList)
 			}
@@ -96,11 +97,10 @@ func TestRulesService_GetMatch(t *testing.T) {
 	ruleService := NewRulesService(adaptor.NewRuleDynamoRepository(Dyna.Db))
 
 	firstDate := time.Now() // log time:
-	r := ruleService.GetMatch(u)
+	r, _ := ruleService.GetMatch(u)
 	secondDate := time.Now() // log time:
 	difference := secondDate.Sub(firstDate)
 	fmt.Println("[TEST] Get Match took: ", difference)
-
 	// expect to match certain node.
 	fmt.Println("Found results: ", len(r))
 }

@@ -8,13 +8,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/adaptor"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/app"
+	"go.uber.org/zap"
 	"log"
 )
 
 // Returns an application instance.
 // > RulesService
 // > MetadataService
-func NewApplication() app.Application {
+func NewApplication(logger *zap.Logger) app.BusinessLogicImpl {
 	fmt.Println("[DEBUG] create new application")
 
 	// Create local dynamodb instance
@@ -22,7 +23,8 @@ func NewApplication() app.Application {
 
 	rulesRepository := adaptor.NewRuleDynamoRepository(svc)
 
-	return app.Application{
+	return app.BusinessLogicImpl{
+		Logger:       logger,
 		RulesService: app.NewRulesService(rulesRepository),
 	}
 }

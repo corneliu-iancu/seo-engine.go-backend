@@ -27,7 +27,7 @@ func NewRulesService(rulesRepository adaptor.RuleDynamoRepository) RulesService 
 }
 
 // Creates segments and persists them to db though repository layer.
-func (rs RulesService) CreateFromListOfSegments(segments []string) []rule.Segment {
+func (rs RulesService) CreateFromListOfStrings(segments []string) []rule.Segment {
 	result := []rule.Segment{}
 	parentId := ROOT
 	weight := 0
@@ -66,6 +66,8 @@ func (rs RulesService) CreateFromListOfSegments(segments []string) []rule.Segmen
 			}
 
 			fmt.Println("[DEBUG] Segment: ", s, " has beed created")
+		} else {
+			fmt.Println("[DEBUG] Segment: ", s, " already exists.")
 		}
 
 		weight += int(s.Type)
@@ -118,16 +120,18 @@ func (rs RulesService) GetRulesByDomain(domain string) ([]rule.Rule, error) {
 	return rules, nil
 }
 
-func (rs RulesService) GetMatch(u *url.URL) []rule.Rule {
+func (rs RulesService) GetMatch(u *url.URL) ([]rule.Rule, error) {
 	pathParams := helper.GetURIAsSlice(u)
-
+	fmt.Println("[DEBUG] Get match rules for ", pathParams)
 	// costly operation. @todo: refactor to query for each param.
 	// @todo: verify times for both aproches.
-	rules, _ := rs.GetRulesByDomain(pathParams[0])
-	r := findMatches(rules, pathParams)
+	rules, error := rs.GetRulesByDomain(pathParams[0])
+	if error != nil {
+		return nil, error
+	}
 
-	fmt.Println("[DEBUG] Get match rules for ", pathParams)
-	return r
+	r := findMatches(rules, pathParams)
+	return r, nil
 }
 
 func relationMap(segments []rule.Segment) map[string][]string {

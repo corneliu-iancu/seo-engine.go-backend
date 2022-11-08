@@ -75,12 +75,12 @@ func (rdr RuleDynamoRepository) GetSegments() ([]model.Segment, error) {
 	}
 
 	for _, i := range result.Items {
-		rule := model.Segment{}
-		err = dynamodbattribute.UnmarshalMap(i, &rule)
+		segment := model.Segment{}
+		err = dynamodbattribute.UnmarshalMap(i, &segment)
 		if err != nil {
 			log.Fatalf("Got error unmashalling: %s", err)
 		}
-		results = append(results, rule)
+		results = append(results, segment)
 	}
 
 	return results, nil
@@ -242,6 +242,7 @@ func (rdr RuleDynamoRepository) CreateRulesTable() (*dynamodb.CreateTableOutput,
 	return result, nil
 }
 
+// @todo: remove me
 func (rdr RuleDynamoRepository) GetRootSegment(segment model.Segment) model.Segment {
 	// retrieve elements with ParentId == 0 and Path = segment.Path
 	filter := expression.Name("ParentId").Equal(expression.Value("0")).And(expression.Name("Path").Equal(expression.Value(segment.Path)))

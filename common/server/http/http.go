@@ -60,7 +60,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 // () config *Config, log Logger, monitor Monitor
 func New(routes func(*gin.Engine), logger *zap.Logger) *Server {
 	// Default configuration.
-	port := 9000
+	port := 9000                // @todo: read from env.
 	timeout := 10 * time.Second // default timeout - 10 000 milliseconds (10s)
 
 	// Creates new gin router.

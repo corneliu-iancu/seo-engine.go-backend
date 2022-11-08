@@ -1,4 +1,7 @@
-// todo: add docs.
+// ================================================
+// HTTP Handlers
+// Implements router.go ServerInterface methods.
+// ================================================
 package handler
 
 import (
@@ -10,26 +13,17 @@ import (
 )
 
 type HttpControllers struct {
-	app app.App
+	app app.BusinessLogic
 }
 
 // Creates new http controllers instance.
-func NewHttpControllers(app app.App) *HttpControllers {
-	// todo: implement me.
+func NewHttpControllers(app app.BusinessLogic) *HttpControllers {
 	return &HttpControllers{
 		app: app,
 	}
 }
 
-// Returns all db segments data.
-// @todo: remove me.
-func (hc HttpControllers) FindAllSegments(ctx *gin.Context) {
-	segments, _ := hc.app.GetAllSegments() // @todo: rename to find all segments.
-	ctx.IndentedJSON(http.StatusOK, segments)
-}
-
-// Returns all rules.
-// @todo: remove me.
+// Returns all rules
 func (hc HttpControllers) GetRules(ctx *gin.Context) {
 	rules, _ := hc.app.GetAllRules()
 	ctx.IndentedJSON(http.StatusOK, rules)
@@ -41,12 +35,10 @@ func (hc HttpControllers) AddRule(ctx *gin.Context) {
 	uri, _ := ctx.GetQuery("uri")
 	u, err := url.Parse(uri)
 	if err != nil {
-		panic(err)
+		panic(err) //@todo: handle errors mechanism.
 	}
 
-	// @todo: only send the URI. The parse should go in app.
-	result, _ := hc.app.AddRule(u)
-
+	result, _ := hc.app.CreateRule(u)
 	ctx.IndentedJSON(http.StatusOK, result)
 }
 
@@ -59,6 +51,5 @@ func (hc HttpControllers) GetMatch(ctx *gin.Context) {
 	}
 
 	result, _ := hc.app.GetMatch(u)
-
 	ctx.IndentedJSON(http.StatusOK, result)
 }

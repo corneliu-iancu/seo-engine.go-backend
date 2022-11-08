@@ -31,7 +31,7 @@ func main() {
 	defer logger.Sync()
 
 	// application instance.
-	services := factory.NewApplication()
+	application := factory.NewApplication(logger)
 
 	// =============================================
 	// @todo: move me to other me part of the app.
@@ -47,7 +47,7 @@ func main() {
 	// =============================================
 
 	// http handlers
-	httpControllers := handler.NewHttpControllers(services)
+	httpControllers := handler.NewHttpControllers(application)
 
 	// http server with our custom route config
 	httpServer := http.Init(handler.GinHandler(httpControllers), logger)
