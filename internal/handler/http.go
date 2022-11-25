@@ -5,6 +5,7 @@
 package handler
 
 import (
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/metadata"
 	"net/http"
 	"net/url"
 
@@ -29,16 +30,32 @@ func (hc HttpControllers) GetRules(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, rules)
 }
 
+type RulePayload struct {
+	Uri      string             `json:uri`
+	Title    string             `json:title`
+	MetaTags []metadata.MetaTag `json:metaTags`
+}
+
 // Persist one rule to the database.
 func (hc HttpControllers) AddRule(ctx *gin.Context) {
 	// let's read out the input of the user by get parameter
-	uri, _ := ctx.GetQuery("uri")
-	u, err := url.Parse(uri)
+	var rulePayload RulePayload
+	if err := ctx.ShouldBindJSON(&rulePayload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	u, err := url.Parse(rulePayload.Uri)
 	if err != nil {
 		panic(err) //@todo: handle errors mechanism.
 	}
 
-	result, _ := hc.app.CreateRule(u)
+	meta := metadata.Metadata{
+		Title:    rulePayload.Title,
+		MetaTags: rulePayload.MetaTags,
+	}
+
+	result, _ := hc.app.CreateRule(u, meta)
 	ctx.IndentedJSON(http.StatusOK, result)
 }
 

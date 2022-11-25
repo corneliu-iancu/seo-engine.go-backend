@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/adaptor"
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/metadata"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/rule"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/helper"
 	"net/url"
@@ -27,7 +28,7 @@ func NewRulesService(rulesRepository adaptor.RuleDynamoRepository) RulesService 
 }
 
 // Creates segments and persists them to db though repository layer.
-func (rs RulesService) CreateFromListOfStrings(segments []string) []rule.Segment {
+func (rs RulesService) CreateFromListOfStrings(segments []string, meta metadata.Metadata) []rule.Segment {
 	result := []rule.Segment{}
 	parentId := ROOT
 	weight := 0
@@ -59,15 +60,18 @@ func (rs RulesService) CreateFromListOfStrings(segments []string) []rule.Segment
 			s.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
 			s.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 			s.Weight = int8(weight)
+			s.Data = meta
 
-			err := rs.rulesRepository.CreateNode(&s)
+			err := rs.rulesRepository.CreateSegment(&s)
 			if err != nil {
-				fmt.Println("[ERROR] Could not create node element with error: ", err)
+				panic(err) //@todo: handle errors.
+				// fmt.Println("[ERROR] Could not create node element with error: ", err)
 			}
 
-			fmt.Println("[DEBUG] Segment: ", s, " has beed created")
-		} else {
-			fmt.Println("[DEBUG] Segment: ", s, " already exists.")
+			// fmt.Println("[DEBUG] Segment: ", s, " has beed created")
+		} else { // the segment exists. we need to update.
+			// fmt.Println("[DEBUG] Segment: ", s, " already exists.")
+			s.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 		}
 
 		weight += int(s.Type)
@@ -151,7 +155,7 @@ func buildRules(roots []string, relations map[string][]string, segments []rule.S
 
 		segment := findSegment(id, segments)
 
-		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId, Weight: segment.Weight}
+		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId, Weight: segment.Weight, Data: segment.Data}
 
 		if childIDs, ok := relations[id]; ok { // build children
 			r.Children = buildRules(childIDs, relations, segments)

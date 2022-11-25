@@ -9,7 +9,6 @@
 //
 // @todo:
 //
-//	implement logging
 //	implement monitoring
 package main
 
@@ -39,11 +38,13 @@ func main() {
 	// =============================================
 	// create rules table.
 	// =============================================
-	// err := services.CreateRulesTable()
-	// if err != nil {
+
+	//err := application.CreateRulesTable()
+	//if err != nil {
 	//	log.Printf("[ERROR] %+v", err)
-	// }
-	// os.Exit(0)
+	//}
+	//os.Exit(0)
+
 	// =============================================
 
 	// http handlers

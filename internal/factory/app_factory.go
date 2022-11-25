@@ -1,15 +1,17 @@
 package factory
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"log"
+
+	// "github.com/aws/aws-sdk-go-v2/service/dynamodb/dynamodbiface"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/adaptor"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/app"
 	"go.uber.org/zap"
-	"log"
 )
 
 // Returns an application instance.
@@ -21,7 +23,7 @@ func NewApplication(logger *zap.Logger) app.BusinessLogicImpl {
 	// Create local dynamodb instance
 	svc := createLocalClient()
 
-	rulesRepository := adaptor.NewRuleDynamoRepository(svc)
+	rulesRepository := adaptor.NewRuleDynamoRepository(*svc)
 
 	return app.BusinessLogicImpl{
 		Logger:       logger,
@@ -30,7 +32,7 @@ func NewApplication(logger *zap.Logger) app.BusinessLogicImpl {
 }
 
 // Returns an instance of *dynamoDB type
-func createLocalClient() dynamodbiface.DynamoDBAPI {
+func createLocalClient() *dynamodb.Client {
 	// ====================================================
 	// REMOTE CONNECTION.
 	// ====================================================
@@ -45,15 +47,32 @@ func createLocalClient() dynamodbiface.DynamoDBAPI {
 	// ====================================================
 	// LOCAL CONNECTION.
 	// ====================================================
-	sess, err := session.NewSession(&aws.Config{
-		Region:   aws.String("us-west-2"),
-		Endpoint: aws.String("http://localhost:8000")})
 
+	// cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("eu-central-1"))
+	cfg, err := config.LoadDefaultConfig(
+		context.TODO(),
+		config.WithRegion("eu-central-1"),
+		config.WithEndpointResolver(aws.EndpointResolverFunc(
+			func(service, region string) (aws.Endpoint, error) {
+				return aws.Endpoint{URL: "http://localhost:8000"}, nil
+			})),
+	)
 	if err != nil {
-		log.Println(err)
-		// return
+		log.Fatalf("unable to load SDK config, %v", err)
 	}
-	svc := dynamodb.New(sess)
+	// Using the Config value, create the DynamoDB client
+	return dynamodb.NewFromConfig(cfg)
 
-	return dynamodbiface.DynamoDBAPI(svc)
+	//sess, err := session.NewSession(&aws.Config{
+	//	Region:   aws.String("eu-central-1"),
+	//	Endpoint: aws.String("http://localhost:8000"),
+	//})
+	//
+	//if err != nil {
+	//	log.Println(err)
+	//	// return
+	//}
+	//svc := dynamodb.New(sess)
+	//
+	//return dynamodbiface.DynamoDBAPI(svc)
 }

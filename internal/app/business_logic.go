@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/metadata"
 	"go.uber.org/zap"
 	"net/url"
 
@@ -25,8 +26,7 @@ type BusinessLogicImpl struct {
 // Used by our http handlers in order to process/retrieve data
 // ================================================
 type BusinessLogic interface {
-	// GetAllSegments() ([]rule.Segment, error) // @todo: remove me.
 	GetAllRules() ([]rule.Rule, error)
-	CreateRule(*url.URL) ([]rule.Segment, error) // @todo: rename to CreateRule, and return type.
+	CreateRule(*url.URL, metadata.Metadata) ([]rule.Segment, error)
 	GetMatch(*url.URL) ([]rule.Rule, error)
 }

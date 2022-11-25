@@ -21,7 +21,7 @@ func GinHandler(si ServerInterface) func(*gin.Engine) {
 
 			// Handler for registering a new seo rule based on a URI parameter.
 			// @todo: move to POST on /rules endpoint.
-			v1.Handle("GET", "/rules/create", si.AddRule)
+			v1.Handle("POST", "/rules/create", si.AddRule)
 
 			// Handler for registering a new seo rule based on a URI parameter.
 			v1.Handle("GET", "/rules/match", si.GetMatch)
