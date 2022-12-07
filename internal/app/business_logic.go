@@ -26,7 +26,8 @@ type BusinessLogicImpl struct {
 // Used by our http handlers in order to process/retrieve data
 // ================================================
 type BusinessLogic interface {
-	GetAllRules() ([]rule.Rule, error)
 	CreateRule(*url.URL, metadata.Metadata) ([]rule.Segment, error)
+	GetAllRules() ([]rule.Rule, error)
 	GetMatch(*url.URL) ([]rule.Rule, error)
+	GetURLBySegmentId(segmentId string) ([]rule.Segment, error)
 }

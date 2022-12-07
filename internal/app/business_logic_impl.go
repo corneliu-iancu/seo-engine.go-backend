@@ -10,6 +10,8 @@ import (
 	"net/url"
 )
 
+// ################ Interface methods ################ //
+
 func (app BusinessLogicImpl) GetAllRules() ([]rule.Rule, error) {
 	app.Logger.Debug("[DEBUG] 💡 App(business layer) -> Get all rules.")
 	return app.RulesService.GetRules()
@@ -32,6 +34,12 @@ func (app BusinessLogicImpl) CreateRule(u *url.URL, meta metadata.Metadata) ([]r
 func (app BusinessLogicImpl) GetMatch(u *url.URL) ([]rule.Rule, error) {
 	return app.RulesService.GetMatch(u)
 }
+
+func (app BusinessLogicImpl) GetURLBySegmentId(segmentId string) ([]rule.Segment, error) {
+	return app.RulesService.GetURLBySegmentId(segmentId)
+}
+
+// ################ End Interface methods ################ //
 
 // Creates the rules table.
 func (app BusinessLogicImpl) CreateRulesTable() error {

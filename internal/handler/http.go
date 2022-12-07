@@ -5,6 +5,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/corneliu-iancu/seo-engine.go-backend/internal/domain/metadata"
 	"net/http"
 	"net/url"
@@ -17,23 +18,17 @@ type HttpControllers struct {
 	app app.BusinessLogic
 }
 
+type RulePayload struct {
+	Uri      string             `json:"uri"`
+	Title    string             `json:"title"`
+	MetaTags []metadata.MetaTag `json:"metaTags"`
+}
+
 // Creates new http controllers instance.
 func NewHttpControllers(app app.BusinessLogic) *HttpControllers {
 	return &HttpControllers{
 		app: app,
 	}
-}
-
-// Returns all rules
-func (hc HttpControllers) GetRules(ctx *gin.Context) {
-	rules, _ := hc.app.GetAllRules()
-	ctx.IndentedJSON(http.StatusOK, rules)
-}
-
-type RulePayload struct {
-	Uri      string             `json:uri`
-	Title    string             `json:title`
-	MetaTags []metadata.MetaTag `json:metaTags`
 }
 
 // Persist one rule to the database.
@@ -55,7 +50,11 @@ func (hc HttpControllers) AddRule(ctx *gin.Context) {
 		MetaTags: rulePayload.MetaTags,
 	}
 
-	result, _ := hc.app.CreateRule(u, meta)
+	result, err := hc.app.CreateRule(u, meta)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	ctx.IndentedJSON(http.StatusOK, result)
 }
 
@@ -69,4 +68,24 @@ func (hc HttpControllers) GetMatch(ctx *gin.Context) {
 
 	result, _ := hc.app.GetMatch(u)
 	ctx.IndentedJSON(http.StatusOK, result)
+}
+
+// Returns all rules
+func (hc HttpControllers) GetRules(ctx *gin.Context) {
+	rules, _ := hc.app.GetAllRules()
+	ctx.IndentedJSON(http.StatusOK, rules)
+}
+
+func (hc HttpControllers) GetUrlBySegmentId(ctx *gin.Context) {
+	segmentId, exists := ctx.GetQuery("id")
+	if exists != true {
+		panic("missing query identifier")
+	}
+
+	segments, err := hc.app.GetURLBySegmentId(segmentId)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.IndentedJSON(http.StatusOK, segments)
 }

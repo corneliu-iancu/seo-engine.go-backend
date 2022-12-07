@@ -19,7 +19,6 @@ type Rule struct {
 	ParentId string
 	Path     string
 	Type     SegmentType
-	Domain   string `json:"-"`
 	Weight   int8
 	Data     metadata.Metadata
 	Children []Rule `json:",omitempty"`
@@ -29,7 +28,6 @@ type Rule struct {
 type Segment struct {
 	Id        string            // Unique identifier
 	ParentId  string            // Parent Id
-	Domain    string            // Url domain
 	Path      string            // Actual path param
 	Data      metadata.Metadata // Metadata information
 	CreatedAt string            // Created at
@@ -49,5 +47,5 @@ func (segment Segment) GetKey() map[string]types.AttributeValue {
 	if err != nil {
 		panic(err)
 	}
-	return map[string]types.AttributeValue{"Path": path, "ParentID": parentId}
+	return map[string]types.AttributeValue{"Path": path, "ParentId": parentId}
 }

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const ROOT = "ROOT_NODE"
+const ROOT = "ROOT"
 
 // @todo: !! move to service package.
 // @todo: add docs
@@ -32,15 +32,12 @@ func (rs RulesService) CreateFromListOfStrings(segments []string, meta metadata.
 	result := []rule.Segment{}
 	parentId := ROOT
 	weight := 0
-	domain := segments[0]
 
 	for _, segment := range segments {
-		fmt.Println("[DEBUG] Looping segments >> ", segment)
-		// pentru fiecare segment avem doua variante.
-		s, error := rs.rulesRepository.GetSegmentByPathAndParent(segment, parentId)
-
-		if error != nil {
-			fmt.Println("[ERROR] Failed to get by Path and ParentId", error)
+		s, err := rs.rulesRepository.GetSegmentByPathAndParent(segment, parentId)
+		if err != nil {
+			fmt.Println("[ERROR] Failed to get by Path and ParentId", err)
+			return result
 		}
 
 		if len(s.Id) == 0 { // 2. The segment does not exists.
@@ -56,20 +53,17 @@ func (rs RulesService) CreateFromListOfStrings(segments []string, meta metadata.
 
 			s.Path = segment
 			s.ParentId = parentId
-			s.Domain = domain
 			s.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
 			s.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 			s.Weight = int8(weight)
 			s.Data = meta
 
-			err := rs.rulesRepository.CreateSegment(&s)
+			err = rs.rulesRepository.CreateSegment(&s)
 			if err != nil {
 				panic(err) //@todo: handle errors.
 				// fmt.Println("[ERROR] Could not create node element with error: ", err)
 			}
-
-			// fmt.Println("[DEBUG] Segment: ", s, " has beed created")
-		} else { // the segment exists. we need to update.
+		} else { // @todo: the segment exists. we need to update.
 			// fmt.Println("[DEBUG] Segment: ", s, " already exists.")
 			s.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 		}
@@ -83,8 +77,12 @@ func (rs RulesService) CreateFromListOfStrings(segments []string, meta metadata.
 
 // Creates the rules tables. Returns error if the table already exists.
 func (rs RulesService) CreateRulesTable() error {
-	result, err := rs.rulesRepository.CreateRulesTable()
-	fmt.Println(result)
+	exists, err := rs.rulesRepository.TableExists()
+
+	if !exists {
+		_, err = rs.rulesRepository.CreateRulesTable()
+	}
+
 	return err
 }
 
@@ -109,6 +107,7 @@ func (rs RulesService) GetRules() ([]rule.Rule, error) {
 }
 
 // Returns all rules by using the domain property as input.
+// @todo: remove me.
 func (rs RulesService) GetRulesByDomain(domain string) ([]rule.Rule, error) {
 
 	segments, err := rs.rulesRepository.GetSegmentsByDomainName(domain)
@@ -129,15 +128,38 @@ func (rs RulesService) GetMatch(u *url.URL) ([]rule.Rule, error) {
 	fmt.Println("[DEBUG] Get match rules for ", pathParams)
 	// costly operation. @todo: refactor to query for each param.
 	// @todo: verify times for both aproches.
-	rules, error := rs.GetRulesByDomain(pathParams[0])
-	if error != nil {
-		return nil, error
+
+	// get all rules.
+
+	rules, err := rs.GetRulesByDomain(pathParams[0])
+	if err != nil {
+		return nil, err
 	}
 
 	r := findMatches(rules, pathParams)
 	return r, nil
 }
 
+func (rs RulesService) GetURLBySegmentId(segmentId string) ([]rule.Segment, error) {
+	segmentList := []rule.Segment{}
+	segment, _ := rs.rulesRepository.GetBySegmentId(segmentId)
+
+	parent := segment.ParentId
+	for parent != ROOT {
+		segmentList = append(segmentList, *segment)
+		segment, _ = rs.rulesRepository.GetBySegmentId(parent)
+		parent = segment.ParentId
+	}
+
+	// also appending the root element to the list.
+	segmentList = append(segmentList, *segment)
+
+	return segmentList, nil
+}
+
+// ################################################################################## //
+// ###############################  Private Methods  ################################ //
+// ################################################################################## //
 func relationMap(segments []rule.Segment) map[string][]string {
 	relations := make(map[string][]string)
 
@@ -152,10 +174,9 @@ func buildRules(roots []string, relations map[string][]string, segments []rule.S
 	rules := make([]rule.Rule, len(roots))
 
 	for i, id := range roots {
-
 		segment := findSegment(id, segments)
 
-		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, Domain: segment.Domain, ParentId: segment.ParentId, Weight: segment.Weight, Data: segment.Data}
+		r := rule.Rule{Id: id, Path: segment.Path, Type: segment.Type, ParentId: segment.ParentId, Weight: segment.Weight, Data: segment.Data}
 
 		if childIDs, ok := relations[id]; ok { // build children
 			r.Children = buildRules(childIDs, relations, segments)
