@@ -168,7 +168,6 @@ func (rdr RuleDynamoRepository) TableExists() (bool, error) {
 	return exists, err
 }
 
-// @todo: implement me
 // Persists one segment to the database.
 func (rdr RuleDynamoRepository) CreateSegment(segment *model.Segment) error {
 	// generate Id.
@@ -178,40 +177,15 @@ func (rdr RuleDynamoRepository) CreateSegment(segment *model.Segment) error {
 	if err != nil {
 		panic(err)
 	}
+	
 	_, err = rdr.db.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(tableName), Item: item,
 	})
 	if err != nil {
 		log.Printf("Couldn't add item to table. Here's why: %v\n", err)
 	}
-	return err
 
-	//svc := rdr.db
-	//
-	//if len(segment.Id) == 0 {
-	//	segment.Id = uuid.New().String()[:8]
-	//}
-	//
-	//fmt.Println("[DEBUG] New segmentId: ", segment.Id)
-	//
-	//av, err := dynamodbattribute.MarshalMap(segment)
-	//if err != nil {
-	//	// log.Fatalf("Got error marshalling new movie item: %s", err)
-	//	return err
-	//}
-	//
-	//input := &dynamodb.PutItemInput{
-	//	Item:      av,
-	//	TableName: aws.String(tableName),
-	//}
-	//
-	//_, err = svc.PutItem(input)
-	//if err != nil {
-	//	// log.Fatalf("Got error calling PutItem: %s", err)
-	//	return err
-	//}
-	//
-	return nil
+	return err
 }
 
 // @todo: implement me

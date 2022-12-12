@@ -130,8 +130,9 @@ func (rs RulesService) GetMatch(u *url.URL) ([]rule.Rule, error) {
 	// @todo: verify times for both aproches.
 
 	// get all rules.
-
+	
 	rules, err := rs.GetRulesByDomain(pathParams[0])
+
 	if err != nil {
 		return nil, err
 	}
